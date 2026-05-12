@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>그로스메이커 서비스 구조 매트릭스</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg: #f7f5f0;
+  --surface: #ffffff;
+  --border: #e2ddd6;
+  --border2: #ccc6bc;
+  --text: #1a1814;
+  --text-mid: #5a5650;
+  --text-muted: #9a9590;
+  --s1: #1a1814;   /* 진단 */
+  --s2: #2d6a4f;   /* 플랜 */
+  --s3: #1e4d8c;   /* SaaS */
+  --s4: #7c4d00;   /* 컨설팅 */
+  --s5: #8b1a1a;   /* 대행 */
+  --s6: #444;      /* 교체 */
+  --accent: #e8401c;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans KR', sans-serif;
+  padding: 40px 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 40px;
+  padding-bottom: 28px;
+  border-bottom: 2px solid var(--text);
+}
+
+.header-left {}
+.brand {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+h1 {
+  font-size: 30px;
+  font-weight: 900;
+  line-height: 1.25;
+  letter-spacing: -0.5px;
+}
+.header-right {
+  text-align: right;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.8;
+}
+
+/* Journey bar */
+.journey-bar {
+  display: flex;
+  gap: 0;
+  margin-bottom: 32px;
+  overflow: hidden;
+  border-radius: 10px;
+  border: 1px solid var(--border2);
+}
+
+.journey-step {
+  flex: 1;
+  padding: 14px 12px;
+  text-align: center;
+  position: relative;
+  cursor: default;
+  transition: filter 0.2s;
+}
+
+.journey-step:hover { filter: brightness(1.08); }
+
+.journey-step::after {
+  content: '▶';
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+  z-index: 2;
+}
+.journey-step:last-child::after { display: none; }
+
+.js-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  opacity: 0.7;
+  margin-bottom: 4px;
+}
+.js-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.3;
+}
+
+/* Main grid */
+.service-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 36px;
+}
+
+.service-row {
+  display: grid;
+  grid-template-columns: 200px 1fr 180px 200px 220px;
+  gap: 0;
+  background: var(--surface);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+
+.service-row:hover {
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+
+.col-label {
+  padding: 20px 18px;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.step-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  margin-bottom: 6px;
+  opacity: 0.6;
+}
+
+.step-name {
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.3;
+  margin-bottom: 4px;
+}
+
+.step-tag {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.col-main {
+  padding: 20px 20px;
+  border-right: 1px solid var(--border);
+}
+
+.col-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-family: 'DM Mono', monospace;
+  margin-bottom: 10px;
+}
+
+.col-desc {
+  font-size: 13px;
+  color: var(--text-mid);
+  line-height: 1.7;
+}
+
+.col-desc strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.col-value {
+  padding: 20px 16px;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.val-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-mid);
+}
+
+.val-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.col-price {
+  padding: 20px 18px;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+}
+
+.price-main {
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+
+.price-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.price-badge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 20px;
+  margin-top: 4px;
+}
+
+.col-kpi {
+  padding: 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.kpi-item {
+  font-size: 12px;
+  color: var(--text-mid);
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  line-height: 1.5;
+}
+
+.kpi-arrow {
+  font-size: 10px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* Row color themes */
+.row-1 .col-label { background: var(--s1); color: #fff; }
+.row-1 .step-num { color: rgba(255,255,255,0.5); }
+.row-1 .step-tag { background: rgba(255,255,255,0.15); color: #fff; }
+.row-1 .price-main { color: var(--s1); }
+.row-1 .val-dot { background: var(--s1); }
+.row-1 .kpi-arrow { color: var(--s1); }
+
+.row-2 .col-label { background: var(--s2); color: #fff; }
+.row-2 .step-num { color: rgba(255,255,255,0.5); }
+.row-2 .step-tag { background: rgba(255,255,255,0.2); color: #fff; }
+.row-2 .price-main { color: var(--s2); }
+.row-2 .val-dot { background: var(--s2); }
+.row-2 .kpi-arrow { color: var(--s2); }
+
+.row-3 .col-label { background: var(--s3); color: #fff; }
+.row-3 .step-num { color: rgba(255,255,255,0.5); }
+.row-3 .step-tag { background: rgba(255,255,255,0.2); color: #fff; }
+.row-3 .price-main { color: var(--s3); }
+.row-3 .val-dot { background: var(--s3); }
+.row-3 .kpi-arrow { color: var(--s3); }
+
+.row-4 .col-label { background: var(--s4); color: #fff; }
+.row-4 .step-num { color: rgba(255,255,255,0.5); }
+.row-4 .step-tag { background: rgba(255,255,255,0.2); color: #fff; }
+.row-4 .price-main { color: var(--s4); }
+.row-4 .val-dot { background: var(--s4); }
+.row-4 .kpi-arrow { color: var(--s4); }
+
+.row-5 .col-label { background: var(--s5); color: #fff; }
+.row-5 .step-num { color: rgba(255,255,255,0.5); }
+.row-5 .step-tag { background: rgba(255,255,255,0.2); color: #fff; }
+.row-5 .price-main { color: var(--s5); }
+.row-5 .val-dot { background: var(--s5); }
+.row-5 .kpi-arrow { color: var(--s5); }
+
+.row-6 .col-label { background: #444; color: #fff; }
+.row-6 .step-num { color: rgba(255,255,255,0.5); }
+.row-6 .step-tag { background: rgba(255,255,255,0.15); color: #fff; }
+.row-6 .price-main { color: #444; }
+.row-6 .val-dot { background: #888; }
+.row-6 .kpi-arrow { color: #888; }
+
+/* Column headers */
+.col-headers {
+  display: grid;
+  grid-template-columns: 200px 1fr 180px 200px 220px;
+  gap: 0;
+  margin-bottom: 8px;
+  padding: 0 4px;
+}
+
+.col-h {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 0 18px;
+}
+
+/* Strategy box */
+.strategy-section {
+  margin-top: 12px;
+}
+
+.strategy-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.strategy-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.strategy-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+}
+
+.sc-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  font-family: 'DM Mono', monospace;
+}
+
+.sc-title {
+  font-size: 14px;
+  font-weight: 900;
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+
+.sc-body {
+  font-size: 12px;
+  color: var(--text-mid);
+  line-height: 1.7;
+}
+
+.sc-highlight {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: var(--text);
+  color: #fff;
+}
+
+/* Revenue model */
+.revenue-row {
+  display: flex;
+  gap: 14px;
+  margin-top: 14px;
+}
+.rev-card {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.rev-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.rev-name {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+.rev-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.rev-tag {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.tag-cash { background: #fff3cd; color: #7c4d00; }
+.tag-scale { background: #d1ecf1; color: #1e4d8c; }
+.tag-future { background: #d4edda; color: #2d6a4f; }
+
+@media (max-width: 900px) {
+  .service-row { grid-template-columns: 1fr; }
+  .col-headers { display: none; }
+  .col-label, .col-main, .col-value, .col-price, .col-kpi {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .strategy-grid { grid-template-columns: 1fr; }
+  .journey-bar { flex-direction: column; border-radius: 10px; }
+  .journey-step::after { display: none; }
+  .header { flex-direction: column; gap: 12px; }
+  .header-right { text-align: left; }
+  .revenue-row { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="brand">GROWTHMAKER · Service Structure Matrix v2.0</div>
+    <h1>고객 여정 기반<br>서비스 구조 & 가격 설계</h1>
+  </div>
+  <div class="header-right">
+    진단 → 추천 → SaaS → 컨설팅 → 대행<br>
+    셀프서브부터 풀매니지드까지<br>
+    <strong>고객이 레벨을 선택하는 구조</strong>
+  </div>
+</div>
+
+<!-- Journey Bar -->
+<div class="journey-bar">
+  <div class="journey-step" style="background:var(--s1)">
+    <div class="js-num">STEP 01</div>
+    <div class="js-name">진단</div>
+  </div>
+  <div class="journey-step" style="background:var(--s2)">
+    <div class="js-num">STEP 02</div>
+    <div class="js-name">플랜 추천</div>
+  </div>
+  <div class="journey-step" style="background:var(--s3)">
+    <div class="js-num">STEP 03</div>
+    <div class="js-name">SaaS 자체 해결</div>
+  </div>
+  <div class="journey-step" style="background:var(--s4)">
+    <div class="js-num">STEP 04</div>
+    <div class="js-name">시니어 컨설팅</div>
+  </div>
+  <div class="journey-step" style="background:var(--s5)">
+    <div class="js-num">STEP 05</div>
+    <div class="js-name">실무 대행</div>
+  </div>
+  <div class="journey-step" style="background:var(--s6)">
+    <div class="js-num">STEP 06</div>
+    <div class="js-name">PM 교체 보장</div>
+  </div>
+</div>
+
+<!-- Column headers -->
+<div class="col-headers">
+  <div class="col-h">서비스 단계</div>
+  <div class="col-h">내용 & 가치</div>
+  <div class="col-h">핵심 고객 가치</div>
+  <div class="col-h">가격 설계 (안)</div>
+  <div class="col-h">성공 지표 / KPI</div>
+</div>
+
+<!-- Service Grid -->
+<div class="service-grid">
+
+  <!-- ROW 1: 진단 -->
+  <div class="service-row row-1">
+    <div class="col-label">
+      <div class="step-num">STEP 01</div>
+      <div class="step-name">성장<br>진단</div>
+      <span class="step-tag">진입점 · Lead</span>
+    </div>
+    <div class="col-main">
+      <div class="col-title">What</div>
+      <div class="col-desc">
+        현재 매출 구조·고객 퍼널·광고 데이터 분석 후<br>
+        <strong>"어떤 지표를 높여야 하고, 어떤 액션이 필요한지"</strong> 명확하게 제시.<br>
+        그로스PM이 직접 진행, 결과 리포트 제공.
+      </div>
+    </div>
+    <div class="col-value">
+      <div class="col-title">고객 가치</div>
+      <div class="val-item"><div class="val-dot"></div>막막함 즉시 해소</div>
+      <div class="val-item"><div class="val-dot"></div>돈 쓰기 전에 방향 확인</div>
+      <div class="val-item"><div class="val-dot"></div>신뢰 형성 · 계약 전환</div>
+    </div>
+    <div class="col-price">
+      <div class="col-title">가격</div>
+      <div class="price-main">무료~29만</div>
+      <div class="price-sub">기본 진단 무료<br>심화 진단 29만원 (1회)</div>
+      <span class="price-badge" style="background:#f0f0f0;color:#333">리드 퍼널 역할</span>
+    </div>
+    <div class="col-kpi">
+      <div class="col-title">성공 지표</div>
+      <div class="kpi-item"><span class="kpi-arrow">▸</span>진단→유료 전환율 목표 40%↑</div>
+      <div class="kpi-item"><span class="kpi-arrow">▸</span>진단 완료 후 플랜 추천 수락률</div>
+      <div class="kpi-item"><span class="kpi-arrow">▸</span>NPS (진단 만족도)</div>
+    </div>
+  </div>
+
+  <!-- ROW 2: 플랜 추천 -->
+  <div class="service-row row-2">
+    <div class="col-label">
+      <div class="step-num">STEP 02</div>
+      <div class="step-name">그로스<br>플랜 추천</div>
+      <span class="step-tag">매칭 · Convert</span>
+    </div>
+    <div class="col-main">
+      <div class="col-title">What</div>
+      <div class="col-desc">
+        진단 결과 기반으로 <strong>고객에게 가장 필요한 서비스 조합을 추천.</strong><br>
+        SaaS 단독 / 컨설팅 추가 / 대행 풀패키지 중 최적 플랜 제안.<br>
+        3개 이하 선택지로 단순화하여 결정 피로 최소화.
+      </div>
+    </div>
+    <div class="col-value">
+      <div class="col-title">고객 가치</div>
+      <div class="val-item"><div class="val-dot"></div>"뭘 사야 하는지" 명확</div>
+      <div class="val-item"><div class="val-dot"></div>불필요한 서비스 제거</div>
+      <div class="val-item"><div class="val-dot"></div>합리적 가격 신뢰</div>
+    </div>
+    <div class="col-price">
+      <div class="col-title">가격</div>
+      <div class="price-main">포함</div>
+      <div class="price-sub">진단 서비스에 포함<br>또는 온보딩 단계 무료</div>
+      <span class="price-badge" style="background:#d4edda;color:#2d6a4f">전환율 핵심 단계</span>
+    </div>
+    <div class="col-kpi">
+      <div class="col-title">성공 지표</div>
+      <div class="kpi-item"><span class="kpi-arrow">▸</span>추천 플랜 수락률 목표 60%↑</div>
+      <div class="kpi-item"><span class="kpi-arrow">▸</span>추천→결제 소요 시간 (단축)</div>
+      <div class="kpi-item"><span class="kpi-arrow">▸</span>플랜별 선택 분포 트래킹</div>
+    </div>
+  </div>
+
+  <!-- ROW 3: SaaS -->
+  <div class="service-row row-3">
+    <div class="col-label">
+      <div class="step-num">STEP 03</div>
+      <div class="step-name">GOS<br>SaaS</div>
+      <span class="step-tag">스케일 · Retain</span>
+    </div>
+    <div class="col-main">
+      <div class="col-title">What</div>
+      <div class="col-desc">
+        <strong>지표 대시보드 · 고객 퍼널 관리 · 데이터 연동을 SaaS 제품으로 자체 해결.</strong><br>
+        GA4 · 메타 · CRM 통합 연동. 매출 성장 지표 실시간 모니터링.<br>
+        컨설팅·대행 없이도 데이터 기반 의사결정 가능한 독립 제품.
+      </div>
+    </div>
+    <div class="col-value">
+      <div class="col-title">고객 가치</div>
+      <div class="val-item"><div class="val-dot"></div>저비용 자체 운영 가능</div>
+      <div class="val-item"><div class="val-dot"></div>데이터 주권 확보</div>
+      <div class="val-item"><div class="val-dot"></div>스케일 가능한 구조</div>
+    </div>
+    <div class="col-price">
+      <div class="col-title">가격</div>
+      <div class="price-main">29~99만</div>
+      <div class="price-sub">월 구독 / 3단계 티어<br>Basic 29 / Pro 59 / Scale 99</div>
+      <span class="price-badge" style="background:#d1ecf1;color:#1e4d8c">MRR 핵심 엔진</span>
+    </div>
+    <div class="col-kpi">
+      <div class="col-title">성공 지표</div>
+      <div class="kpi-item"><span class="kpi-arrow">▸</span>MRR 성장률 (월별 추적)</div>
+      <div class="kpi-item"><span class="kpi-arrow">▸</span>구독 유지율 목표 85%↑</div>
+      <div class="kpi-item"><span class="kpi-arrow">▸</span>SaaS→컨설팅 업셀 전환율</div>
+    </div>
+  </div>
+
+  <!-- ROW 4: 컨설팅 -->
+  <div class="service-row row-4">
+    <div class="col-label">
+      <div class="step-num">STEP 04</div>
+      <div class="step-name">시니어 PM<br>컨설팅</div>
+      <span class="step-tag">업셀 · Expand</span>
+    </div>
+    <div class="col-main">
+      <div class="col-title">What</div>
+      <div class="col-desc">
+        <strong>주/월간 단위로 시니어 그로스PM 배정.</strong><br>
+        전략 방향 점검, KPI 진단, 마케팅 액션 리뷰.<br>
+        SaaS로 데이터는 보이지만 "어떻게 해석하고 움직여야 하는지" 막힐 때 투입.
+      </div>
+    </div>
+    <div class="col-value">
+      <div class="col-title">고객 가치</div>
+      <div class="val-item"><div class="val-dot"></div>필요할 때만 고급 리소스</div>
+      <div class="val-item"><div class="val-dot"></div>전략 판단력 즉시 확보</div>
+      <div class="val-item"><div class="val-dot"></div>채용 없이 시니어급 활용</div>
+    </div>
+    <div class="col-price">
+      <div class="col-title">가격</div>
+      <div class="price-main">50~150만</div>
+      <div class="price-sub">월 2회 세션 50만 / 주 1회 150만<br>SaaS 구독자 20% 할인</div>
+      <span class="price-badge" style="background:#fff3cd;color:#7c4d00">고마진 업셀</span>
+    </div>
+    <div class="col-kpi">
+      <div class="col-title">성공 지표</div>
+      <div class="kpi-item"><span class="kpi-arrow">▸</span>세션당 고객 만족도 4.5↑</div>
+      <div class="kpi-item"><span class="kpi-arrow">▸</span>컨설팅→대행 업셀 전환율</div>
+      <div class="kpi-item"><span class="kpi-arrow">▸</span>컨설팅 고객 매출 성장률</div>
+    </div>
+  </div>
+
+  <!-- ROW 5: 대행 -->
+  <div class="service-row row-5">
+    <div class="col-label">
+      <div class="step-num">STEP 05</div>
+      <div class="step-name">그로스 PM<br>실무 대행</div>
+      <span class="step-tag">풀매니지드 · Premium</span>
+    </div>
+    <div class="col-main">
+      <div class="col-title">What</div>
+      <div class="col-desc">
+        <strong>그로스PM + 마케터·엔지니어 풀팀 배정, 실무 운영 전담.</strong><br>
+        퍼포먼스 마케팅 · CRM · 웹 최적화 · 데이터 관리 올인원 실행.<br>
+        사내 팀처럼 움직이되 채용·관리 비용 없음. 월 1,500만원 채용 대비 30%.
+      </div>
+    </div>
+    <div class="col-value">
+      <div class="col-title">고객 가치</div>
+      <div class="val-item"><div class="val-dot"></div>채용·관리 리스크 제로</div>
+      <div class="val-item"><div class="val-dot"></div>즉시 실행 팀 확보</div>
+      <div class="val-item"><div class="val-dot"></div>성과 미흡 시 교체 가능</div>
+    </div>
+    <div class="col-price">
+      <div class="col-title">가격</div>
+      <div class="price-main">150~500만</div>
+      <div class="price-sub">팀 구성·업무 범위에 따라<br>Starter 150 / Growth 300 / Scale 500</div>
+      <span class="price-badge" style="background:#f8d7da;color:#8b1a1a">캐시카우</span>
+    </div>
+    <div class="col-kpi">
+      <div class="col-title">성공 지표</div>
+      <div class="kpi-item"><span class="kpi-arrow">▸</span>고객사 매출 성장률 (목표 17.9%↑)</div>
+      <div class="kpi-item"><span class="kpi-arrow">▸</span>계약 갱신율 목표 80%↑</div>
+      <div class="kpi-item"><span class="kpi-arrow">▸</span>ROAS · CPA 목표 달성률</div>
+    </div>
+  </div>
+
+  <!-- ROW 6: 교체 보장 -->
+  <div class="service-row row-6">
+    <div class="col-label">
+      <div class="step-num">STEP 06</div>
+      <div class="step-name">PM 즉시<br>교체 보장</div>
+      <span class="step-tag">리텐션 · Trust</span>
+    </div>
+    <div class="col-main">
+      <div class="col-title">What</div>
+      <div class="col-desc">
+        <strong>"성과가 없거나 핏이 맞지 않으면 즉시 교체합니다."</strong><br>
+        채용과 달리 담당자 교체에 비용·감정 소모 없음.<br>
+        고객이 주도권을 갖는 구조 → 계약 진입 심리적 장벽 제거.
+      </div>
+    </div>
+    <div class="col-value">
+      <div class="col-title">고객 가치</div>
+      <div class="val-item"><div class="val-dot"></div>계약 리스크 심리적 해소</div>
+      <div class="val-item"><div class="val-dot"></div>주도권은 항상 고객</div>
+      <div class="val-item"><div class="val-dot"></div>성과 보장 신뢰 형성</div>
+    </div>
+    <div class="col-price">
+      <div class="col-title">가격</div>
+      <div class="price-main">포함</div>
+      <div class="price-sub">컨설팅·대행 플랜에 기본 포함<br>별도 비용 없음</div>
+      <span class="price-badge" style="background:#e9ecef;color:#444">계약 전환율 ↑</span>
+    </div>
+    <div class="col-kpi">
+      <div class="col-title">성공 지표</div>
+      <div class="kpi-item"><span class="kpi-arrow">▸</span>교체 요청률 (낮을수록 좋음)</div>
+      <div class="kpi-item"><span class="kpi-arrow">▸</span>교체 후 만족도 회복률</div>
+      <div class="kpi-item"><span class="kpi-arrow">▸</span>"보장" 메시지 인지율 (영업 추적)</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Strategy Section -->
+<div class="strategy-section">
+  <div class="strategy-title">전략 인사이트 & 리스크</div>
+  <div class="strategy-grid">
+    <div class="strategy-card">
+      <div class="sc-label">핵심 전략</div>
+      <div class="sc-title">SaaS를 독립 제품으로 분리하라</div>
+      <div class="sc-body">현재 대시보드는 서비스 부속품처럼 보임. GOS SaaS를 독립 브랜딩하면 컨설팅·대행과 명확히 분리되어 두 채널 모두 강해짐. 장기 스케일은 SaaS에 있음.</div>
+      <span class="sc-highlight">→ 별도 랜딩페이지 · 가격표 필요</span>
+    </div>
+    <div class="strategy-card">
+      <div class="sc-label">핵심 전략</div>
+      <div class="sc-title">진단을 리드 퍼널로 설계하라</div>
+      <div class="sc-body">무료 진단 → 플랜 추천 → 결제 플로우가 완성되면 인바운드 영업 자동화 가능. 진단 결과가 "객관적 인사이트"로 느껴져야 신뢰 기반 전환 발생.</div>
+      <span class="sc-highlight">→ 진단 결과 템플릿 표준화 급선무</span>
+    </div>
+    <div class="strategy-card">
+      <div class="sc-label">리스크</div>
+      <div class="sc-title">교체 보장이 양날의 검</div>
+      <div class="sc-body">교체 보장은 강력한 훅이지만 교체율이 높아지면 운영 비용 폭증. PM 풀 품질 관리와 매칭 정확도가 선행되어야 함. "교체"보다 "성과 보장"으로 메시지 전환 권장.</div>
+      <span class="sc-highlight">→ 매칭 알고리즘 + 온보딩 강화</span>
+    </div>
+  </div>
+
+  <!-- Revenue Model -->
+  <div class="revenue-row">
+    <div class="rev-card">
+      <div class="rev-icon">💰</div>
+      <div>
+        <div class="rev-name">캐시카우 — 대행 플랜</div>
+        <div class="rev-desc">Step 05 · 월 150~500만 · 현재 핵심 수익원</div>
+      </div>
+      <span class="rev-tag tag-cash">현재 수익</span>
+    </div>
+    <div class="rev-card">
+      <div class="rev-icon">📈</div>
+      <div>
+        <div class="rev-name">스케일 엔진 — GOS SaaS</div>
+        <div class="rev-desc">Step 03 · MRR 기반 · 인력 없이 매출 증가 가능</div>
+      </div>
+      <span class="rev-tag tag-scale">성장 엔진</span>
+    </div>
+    <div class="rev-card">
+      <div class="rev-icon">🚀</div>
+      <div>
+        <div class="rev-name">미래 차별화 — 진단 자동화</div>
+        <div class="rev-desc">Step 01 · AI 진단 자동화 시 리드 비용 급감</div>
+      </div>
+      <span class="rev-tag tag-future">미래 투자</span>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>그로스메이커 고객 가치 매트릭스</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+
+  :root {
+    --bg: #0a0c10;
+    --surface: #12151c;
+    --surface2: #1a1f2b;
+    --border: #252c3a;
+    --accent: #4fffb0;
+    --accent2: #ff6b6b;
+    --accent3: #ffd166;
+    --accent4: #74b9ff;
+    --text: #e8ecf4;
+    --text-muted: #8892a4;
+    --high: #4fffb0;
+    --mid: #ffd166;
+    --low: #ff6b6b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Pretendard', sans-serif;
+    min-height: 100vh;
+    padding: 32px 24px;
+  }
+
+  .header {
+    margin-bottom: 32px;
+    border-left: 3px solid var(--accent);
+    padding-left: 20px;
+  }
+
+  .header-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  h1 {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.3;
+    margin-bottom: 6px;
+  }
+
+  .header-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 24px;
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 4px;
+    width: fit-content;
+  }
+
+  .tab {
+    padding: 8px 18px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--text-muted);
+    border: none;
+    background: transparent;
+    transition: all 0.2s;
+  }
+
+  .tab.active {
+    background: var(--accent);
+    color: #0a0c10;
+  }
+
+  .tab:hover:not(.active) {
+    color: var(--text);
+    background: var(--surface2);
+  }
+
+  /* Section */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* Table */
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  thead tr {
+    background: var(--surface2);
+  }
+
+  th {
+    padding: 14px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  th:first-child { min-width: 180px; }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+    cursor: default;
+  }
+
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+
+  td {
+    padding: 14px 16px;
+    vertical-align: middle;
+  }
+
+  .service-name {
+    font-weight: 700;
+    color: var(--text);
+    font-size: 13px;
+    margin-bottom: 3px;
+  }
+
+  .service-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+
+  .category-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+  }
+
+  /* Score stars */
+  .score {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .dots {
+    display: flex;
+    gap: 3px;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+  }
+
+  .dot.filled-high { background: var(--high); box-shadow: 0 0 6px var(--high)88; }
+  .dot.filled-mid { background: var(--mid); box-shadow: 0 0 6px var(--mid)88; }
+  .dot.filled-low { background: var(--low); }
+
+  .score-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  /* Priority badge */
+  .priority {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .priority.high { background: #4fffb01a; color: var(--high); border: 1px solid #4fffb033; }
+  .priority.mid { background: #ffd1661a; color: var(--mid); border: 1px solid #ffd16633; }
+  .priority.low { background: #ff6b6b1a; color: var(--low); border: 1px solid #ff6b6b33; }
+
+  /* Tag */
+  .tag {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    margin: 2px 2px 2px 0;
+    background: var(--surface2);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+
+  /* Pricing table */
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .pricing-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .pricing-card:hover { border-color: var(--accent)55; }
+
+  .pricing-card.recommended {
+    border-color: var(--accent)66;
+    background: linear-gradient(135deg, #0d1a14 0%, #12151c 100%);
+  }
+
+  .rec-label {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: var(--accent);
+    color: #0a0c10;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 3px 9px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  .pricing-type {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .pricing-name {
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+
+  .pricing-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+
+  .pricing-pros, .pricing-cons {
+    margin-bottom: 12px;
+  }
+
+  .pricing-pros-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--high);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+
+  .pricing-cons-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--low);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+
+  .pricing-item {
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 3px 0;
+    padding-left: 14px;
+    position: relative;
+    line-height: 1.5;
+  }
+
+  .pricing-item::before {
+    position: absolute;
+    left: 0;
+    content: '→';
+    font-size: 10px;
+  }
+
+  .pricing-pros .pricing-item::before { color: var(--high); }
+  .pricing-cons .pricing-item::before { color: var(--low); }
+
+  .fit-bar {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  .fit-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .fit-track {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .fit-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--accent);
+    transition: width 0.8s ease;
+  }
+
+  /* Insight box */
+  .insight-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent3);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-top: 24px;
+  }
+
+  .insight-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent3);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .insight-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .insight-list li {
+    font-size: 12px;
+    color: var(--text-muted);
+    padding-left: 16px;
+    position: relative;
+    line-height: 1.5;
+  }
+
+  .insight-list li::before {
+    content: '▸';
+    position: absolute;
+    left: 0;
+    color: var(--accent3);
+    font-size: 10px;
+    top: 2px;
+  }
+
+  /* Add row button */
+  .add-row-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 10px 16px;
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+    font-family: 'Pretendard', sans-serif;
+  }
+
+  .add-row-btn:hover {
+    border-color: var(--accent)55;
+    color: var(--accent);
+    background: #4fffb008;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #00000088;
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px;
+    width: 90%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal-title {
+    font-size: 16px;
+    font-weight: 800;
+    margin-bottom: 20px;
+    color: var(--text);
+  }
+
+  .form-group {
+    margin-bottom: 14px;
+  }
+
+  .form-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--text);
+    font-size: 13px;
+    padding: 9px 12px;
+    font-family: 'Pretendard', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: var(--accent)55;
+  }
+
+  .form-select option { background: var(--surface); }
+
+  .form-textarea { resize: vertical; min-height: 70px; }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    justify-content: flex-end;
+  }
+
+  .btn-cancel {
+    padding: 9px 18px;
+    border-radius: 8px;
+    background: var(--surface2);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Pretendard', sans-serif;
+  }
+
+  .btn-add {
+    padding: 9px 18px;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #0a0c10;
+    border: none;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: 'Pretendard', sans-serif;
+  }
+
+  /* Editable note inline */
+  .note-cell {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    min-width: 120px;
+  }
+
+  .edit-note {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text);
+    font-size: 12px;
+    padding: 5px 8px;
+    width: 100%;
+    font-family: 'Pretendard', sans-serif;
+    outline: none;
+    resize: none;
+  }
+
+  .pencil-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 2px 4px;
+    opacity: 0;
+    transition: opacity 0.15s;
+    font-size: 12px;
+  }
+
+  tr:hover .pencil-btn { opacity: 1; }
+
+  .note-wrapper { display: flex; align-items: flex-start; gap: 6px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-label">GROWTHMAKER · SERVICE MATRIX</div>
+  <h1>그로스메이커 서비스<br>고객 가치 매트릭스</h1>
+  <div class="header-sub">서비스 항목별 고객 니즈성 · 가격성 · 중요도 분석 — 행 추가 및 메모 수정 가능</div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('value')">서비스 가치 분석</button>
+  <button class="tab" onclick="switchTab('pricing')">과금 방식 비교</button>
+</div>
+
+<!-- TAB 1: 서비스 가치 분석 -->
+<div class="section active" id="tab-value">
+  <div class="table-wrap">
+    <table id="main-table">
+      <thead>
+        <tr>
+          <th>서비스 항목</th>
+          <th>카테고리</th>
+          <th>고객 니즈성</th>
+          <th>가격 적정성</th>
+          <th>비즈니스 중요도</th>
+          <th>차별성</th>
+          <th>우선순위</th>
+          <th>메모 / 개선점</th>
+        </tr>
+      </thead>
+      <tbody id="table-body">
+      </tbody>
+    </table>
+  </div>
+
+  <button class="add-row-btn" onclick="openModal()">
+    <span style="font-size:16px; line-height:1;">+</span> 새 서비스 항목 추가
+  </button>
+
+  <div class="insight-box">
+    <div class="insight-title">💡 전략 인사이트</div>
+    <ul class="insight-list">
+      <li>니즈성·중요도 모두 HIGH인 항목(지표 대시보드, 그로스PM 팀)이 핵심 판매 포인트 — 영업 제안서 전면에 배치 권장</li>
+      <li>가격 적정성이 낮게 느껴지는 항목(전담팀 배치)은 ROI 수치(평균 매출 17.9% 증가, ROAS 1164%)로 정당화 필요</li>
+      <li>주/월간 리포트, CRM 리텐션은 재구매·LTV에 직결 — 구독 유지율 방어 핵심 서비스로 포지셔닝</li>
+      <li>AI 자동화·웹사이트 최적화는 경쟁사 대비 기술 차별성 강조 포인트</li>
+    </ul>
+  </div>
+</div>
+
+<!-- TAB 2: 과금 방식 비교 -->
+<div class="section" id="tab-pricing">
+  <div class="pricing-grid" id="pricing-grid"></div>
+
+  <div class="insight-box">
+    <div class="insight-title">🎯 과금 방식 추천 전략</div>
+    <ul class="insight-list">
+      <li><strong style="color:var(--text)">월 구독(현행 유지)</strong>이 수익 예측성과 고객 락인 측면에서 가장 유리 — 소개서 방향과 일치</li>
+      <li><strong style="color:var(--text)">Task 단위 add-on</strong>을 구독 상위 플랜에 포함하면 업셀링 기회 창출 가능</li>
+      <li>초기 고객 진입장벽 낮추기 위해 <strong style="color:var(--text)">"30일 무료체험 → 월 구독 전환"</strong> 퍼널 권장</li>
+      <li>시간 단위 과금은 에이전시 이미지 강화 우려 — 그로스메이커 포지셔닝(팀 배치)에 비적합</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-title">+ 서비스 항목 추가</div>
+    <div class="form-group">
+      <label class="form-label">서비스 항목명</label>
+      <input type="text" class="form-input" id="inp-name" placeholder="예: AI 콘텐츠 자동화">
+    </div>
+    <div class="form-group">
+      <label class="form-label">카테고리</label>
+      <select class="form-select" id="inp-cat">
+        <option value="데이터·분석">데이터·분석</option>
+        <option value="실행·마케팅">실행·마케팅</option>
+        <option value="팀·운영">팀·운영</option>
+        <option value="성과관리">성과관리</option>
+        <option value="기타">기타</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">고객 니즈성 (1~5)</label>
+      <select class="form-select" id="inp-needs">
+        <option value="5">5 — 매우 높음</option>
+        <option value="4">4 — 높음</option>
+        <option value="3">3 — 보통</option>
+        <option value="2">2 — 낮음</option>
+        <option value="1">1 — 매우 낮음</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">가격 적정성 (1~5)</label>
+      <select class="form-select" id="inp-price">
+        <option value="5">5 — 매우 합리적</option>
+        <option value="4">4 — 합리적</option>
+        <option value="3">3 — 보통</option>
+        <option value="2">2 — 다소 비쌈</option>
+        <option value="1">1 — 고가 인식</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">비즈니스 중요도 (1~5)</label>
+      <select class="form-select" id="inp-imp">
+        <option value="5">5 — 핵심</option>
+        <option value="4">4 — 높음</option>
+        <option value="3">3 — 보통</option>
+        <option value="2">2 — 낮음</option>
+        <option value="1">1 — 부가적</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">경쟁 차별성 (1~5)</label>
+      <select class="form-select" id="inp-diff">
+        <option value="5">5 — 독보적</option>
+        <option value="4">4 — 차별화</option>
+        <option value="3">3 — 유사</option>
+        <option value="2">2 — 낮음</option>
+        <option value="1">1 — 없음</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">메모 / 개선점</label>
+      <textarea class="form-textarea" id="inp-note" placeholder="고객 반응, 개선 필요 사항 등"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">취소</button>
+      <button class="btn-add" onclick="addRow()">추가</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const catColors = {
+  '데이터·분석': { bg: '#4fffb01a', color: '#4fffb0', border: '#4fffb033' },
+  '실행·마케팅': { bg: '#74b9ff1a', color: '#74b9ff', border: '#74b9ff33' },
+  '팀·운영': { bg: '#a29bfe1a', color: '#a29bfe', border: '#a29bfe33' },
+  '성과관리': { bg: '#ffd1661a', color: '#ffd166', border: '#ffd16633' },
+  '기타': { bg: '#ff6b6b1a', color: '#ff6b6b', border: '#ff6b6b33' },
+};
+
+const initialData = [
+  {
+    name: '지표 대시보드',
+    desc: '핵심 KPI·고객 퍼널 데이터 시각화 및 관리',
+    cat: '데이터·분석',
+    needs: 5, price: 4, imp: 5, diff: 5,
+    note: 'ROAS·CAC 누수 지점 즉시 발견 → 경쟁사 대비 핵심 차별화 포인트'
+  },
+  {
+    name: '전담 그로스PM 팀 배치',
+    desc: '시니어 그로스PM + 마케터·엔지니어 풀팀 즉시 투입',
+    cat: '팀·운영',
+    needs: 5, price: 3, imp: 5, diff: 5,
+    note: '월 1,500만원 채용 대비 30% 비용 강조 필요 / ROI 수치로 가격 저항 극복'
+  },
+  {
+    name: '테크니컬 퍼포먼스 마케팅',
+    desc: '메타·구글 광고 채널 기반 온라인 광고 성과 극대화',
+    cat: '실행·마케팅',
+    needs: 5, price: 4, imp: 5, diff: 4,
+    note: '평균 ROAS 1164% 달성 실적 — 제안서 전면 배치 권장'
+  },
+  {
+    name: '웹사이트 전환율 최적화(CRO)',
+    desc: 'Heatmap 기반 UIUX·CTA 개선, 평균 전환율 160% 향상',
+    cat: '실행·마케팅',
+    needs: 4, price: 4, imp: 5, diff: 5,
+    note: '1회 개선 30%, 누적 160% — 구체적 숫자로 체감 가치 높음'
+  },
+  {
+    name: 'CRM / 리텐션 캠페인',
+    desc: '푸시·이메일·이탈방지·업셀링·크로스셀링 실행',
+    cat: '실행·마케팅',
+    needs: 4, price: 4, imp: 5, diff: 4,
+    note: '재구매율 직결 — LTV 상승 효과 수치화 필요'
+  },
+  {
+    name: '주간 / 월간 성과 리포트',
+    desc: '실행 내용, 수치 결과, 다음 액션 플랜 정기 제공',
+    cat: '성과관리',
+    needs: 5, price: 5, imp: 4, diff: 3,
+    note: '투명성 제공으로 고객 신뢰 유지 — 구독 유지율 핵심 요소'
+  },
+  {
+    name: 'GA4 · 광고 · CRM 데이터 통합',
+    desc: '분산된 마케팅 데이터를 단일 대시보드로 연결·관리',
+    cat: '데이터·분석',
+    needs: 4, price: 4, imp: 4, diff: 4,
+    note: '중소 스타트업에서 자체 구축 어려운 영역 — 진입장벽 차별화'
+  },
+  {
+    name: '추천 프로그램 설계 및 관리',
+    desc: '바이럴 인센티브 설계, 공유 유도, 리뷰 요청 자동화',
+    cat: '실행·마케팅',
+    needs: 3, price: 4, imp: 3, diff: 4,
+    note: '고성장 단계에서 효과 극대화 — 초기 스타트업에는 우선순위 낮을 수 있음'
+  },
+  {
+    name: 'AI 자동화 엔지니어링',
+    desc: '마케팅 프로세스 AI 자동화 설계 및 적용',
+    cat: '데이터·분석',
+    needs: 3, price: 3, imp: 4, diff: 5,
+    note: '미래 핵심 차별화 요소 — 현재 고객 인지도 낮으나 잠재 니즈 높음'
+  },
+  {
+    name: '성장 진단 및 그로스 플랜 설계',
+    desc: '현황 분석 후 KPI·문제·액션 제시 (온보딩 포함)',
+    cat: '성과관리',
+    needs: 5, price: 5, imp: 4, diff: 4,
+    note: '초기 진입 결정 요소 — 첫 상담 30분 경험이 곧 계약 전환율'
+  },
+];
+
+const pricingData = [
+  {
+    type: '현행 모델',
+    name: '월 구독형',
+    desc: '고정 월정액 기반 서비스 이용 (150만원~ / 250만원~ 플랜)',
+    pros: ['수익 예측 가능 (MRR 안정화)', '고객 락인 효과', '팀 배치 포지셔닝에 최적합', '갱신 시 플랜 변경 유연성'],
+    cons: ['초기 진입 심리적 부담', '단기 성과 없을 시 해지 리스크'],
+    fit: 90,
+    rec: true
+  },
+  {
+    type: '검토 가능',
+    name: 'Task 단위 과금',
+    desc: '프로젝트·캠페인 단위로 개별 과금 (예: 전환율 최적화 1회, CRM 설계 등)',
+    pros: ['고객 진입장벽 낮음', '특정 니즈에 집중 가능', 'B2B 예산 집행 유연성'],
+    cons: ['수익 불규칙성', '지속 관계 형성 어려움', '단가 협상 이슈 발생'],
+    fit: 55,
+    rec: false
+  },
+  {
+    type: '검토 가능',
+    name: '시간 단위 과금',
+    desc: '그로스PM 및 전문가 시간당 요금 부과',
+    pros: ['소규모 수요 대응 가능', '고객이 직접 통제감 느낌'],
+    cons: ['에이전시 이미지로 포지셔닝 저하', '서비스 가치 측정 어려움', '시간 관리 리소스 증가'],
+    fit: 20,
+    rec: false
+  },
+  {
+    type: '업셀링 활용',
+    name: '성과 연동형 (하이브리드)',
+    desc: '기본 구독 + 매출 성과에 따른 인센티브 수수료 구조',
+    pros: ['고객 신뢰도 극대화', '성과 정렬 (Aligned Incentive)', '프리미엄 계약 가능'],
+    cons: ['수익 예측 어려움', '성과 측정 기준 협의 복잡', '지표 조작 리스크'],
+    fit: 65,
+    rec: false
+  },
+];
+
+function scoreColor(v) {
+  if (v >= 4) return 'high';
+  if (v >= 3) return 'mid';
+  return 'low';
+}
+
+function makeDots(val, type) {
+  let html = '<div class="dots">';
+  for (let i = 1; i <= 5; i++) {
+    const cls = i <= val ? `dot filled-${type}` : 'dot';
+    html += `<div class="${cls}"></div>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+function priorityBadge(needs, imp) {
+  const avg = (needs + imp) / 2;
+  if (avg >= 4.5) return '<span class="priority high">◎ 최우선</span>';
+  if (avg >= 3.5) return '<span class="priority mid">△ 중요</span>';
+  return '<span class="priority low">▽ 검토</span>';
+}
+
+function renderTable() {
+  const tbody = document.getElementById('table-body');
+  const rows = JSON.parse(localStorage.getItem('gm_rows') || 'null') || initialData;
+  tbody.innerHTML = '';
+  rows.forEach((row, idx) => {
+    const c = catColors[row.cat] || catColors['기타'];
+    const ncol = scoreColor(row.needs);
+    const pcol = scoreColor(row.price);
+    const icol = scoreColor(row.imp);
+    const dcol = scoreColor(row.diff);
+    tbody.innerHTML += `
+      <tr>
+        <td>
+          <div class="service-name">${row.name}</div>
+          <div class="service-desc">${row.desc}</div>
+        </td>
+        <td>
+          <span class="category-badge" style="background:${c.bg};color:${c.color};border:1px solid ${c.border}">${row.cat}</span>
+        </td>
+        <td>
+          <div class="score">${makeDots(row.needs, ncol)}<span class="score-label">${row.needs}/5</span></div>
+        </td>
+        <td>
+          <div class="score">${makeDots(row.price, pcol)}<span class="score-label">${row.price}/5</span></div>
+        </td>
+        <td>
+          <div class="score">${makeDots(row.imp, icol)}<span class="score-label">${row.imp}/5</span></div>
+        </td>
+        <td>
+          <div class="score">${makeDots(row.diff, dcol)}<span class="score-label">${row.diff}/5</span></div>
+        </td>
+        <td>${priorityBadge(row.needs, row.imp)}</td>
+        <td>
+          <div class="note-wrapper">
+            <div class="note-cell" id="note-${idx}">${row.note || '—'}</div>
+            <button class="pencil-btn" onclick="editNote(${idx})" title="수정">✎</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+function editNote(idx) {
+  const rows = JSON.parse(localStorage.getItem('gm_rows') || 'null') || initialData;
+  const cell = document.getElementById(`note-${idx}`);
+  const cur = rows[idx].note || '';
+  cell.outerHTML = `<textarea class="edit-note" id="note-edit-${idx}" onblur="saveNote(${idx})" rows="3">${cur}</textarea>`;
+  document.getElementById(`note-edit-${idx}`).focus();
+}
+
+function saveNote(idx) {
+  const rows = JSON.parse(localStorage.getItem('gm_rows') || 'null') || initialData;
+  const el = document.getElementById(`note-edit-${idx}`);
+  if (el) {
+    rows[idx].note = el.value;
+    localStorage.setItem('gm_rows', JSON.stringify(rows));
+    renderTable();
+  }
+}
+
+function openModal() {
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+}
+
+function addRow() {
+  const name = document.getElementById('inp-name').value.trim();
+  if (!name) { alert('항목명을 입력하세요.'); return; }
+  const rows = JSON.parse(localStorage.getItem('gm_rows') || 'null') || initialData;
+  rows.push({
+    name,
+    desc: '',
+    cat: document.getElementById('inp-cat').value,
+    needs: parseInt(document.getElementById('inp-needs').value),
+    price: parseInt(document.getElementById('inp-price').value),
+    imp: parseInt(document.getElementById('inp-imp').value),
+    diff: parseInt(document.getElementById('inp-diff').value),
+    note: document.getElementById('inp-note').value,
+  });
+  localStorage.setItem('gm_rows', JSON.stringify(rows));
+  closeModal();
+  renderTable();
+}
+
+function renderPricing() {
+  const grid = document.getElementById('pricing-grid');
+  grid.innerHTML = '';
+  pricingData.forEach(p => {
+    grid.innerHTML += `
+      <div class="pricing-card ${p.rec ? 'recommended' : ''}">
+        ${p.rec ? '<span class="rec-label">추천</span>' : ''}
+        <div class="pricing-type">${p.type}</div>
+        <div class="pricing-name">${p.name}</div>
+        <div class="pricing-desc">${p.desc}</div>
+        <div class="pricing-pros">
+          <div class="pricing-pros-label">장점</div>
+          ${p.pros.map(x => `<div class="pricing-item">${x}</div>`).join('')}
+        </div>
+        <div class="pricing-cons">
+          <div class="pricing-cons-label">단점 / 리스크</div>
+          ${p.cons.map(x => `<div class="pricing-item">${x}</div>`).join('')}
+        </div>
+        <div class="fit-bar">
+          <div class="fit-label"><span>그로스메이커 적합도</span><span style="color:var(--accent);font-weight:700">${p.fit}%</span></div>
+          <div class="fit-track"><div class="fit-fill" style="width:${p.fit}%"></div></div>
+        </div>
+      </div>
+    `;
+  });
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  if (tab === 'value') {
+    document.querySelectorAll('.tab')[0].classList.add('active');
+    document.getElementById('tab-value').classList.add('active');
+  } else {
+    document.querySelectorAll('.tab')[1].classList.add('active');
+    document.getElementById('tab-pricing').classList.add('active');
+  }
+}
+
+renderTable();
+renderPricing();
+</script>
+</body>
+</html>

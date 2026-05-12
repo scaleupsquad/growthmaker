@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>그로스메이커 플랜 시뮬레이터</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=DM+Mono:wght@400;500;700&display=swap');
+
+:root {
+  --bg: #f8f7f4;
+  --surface: #ffffff;
+  --surface2: #f2f0ec;
+  --border: #e0dbd2;
+  --border2: #ccc6bb;
+  --text: #18160f;
+  --mid: #5a5448;
+  --muted: #9a9080;
+  --accent: #e8401c;
+
+  --early: #2d6a4f;
+  --growth: #1e4d8c;
+  --scale: #7c1f8c;
+
+  --ec: #e8401c;
+  --app: #1e6fbf;
+  --saas: #2d6a4f;
+  --beauty: #b5507a;
+  --local: #7c5c00;
+
+  --saas-col: #1e4d8c;
+  --consult-col: #7c4d00;
+  --agency-col: #8b1a1a;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans KR', sans-serif;
+  padding: 36px 28px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+/* Tabs */
+.top-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 32px;
+  border-bottom: 2px solid var(--text);
+}
+
+.top-tab {
+  padding: 12px 28px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-family: 'Noto Sans KR', sans-serif;
+  position: relative;
+  transition: color 0.2s;
+}
+
+.top-tab.active {
+  color: var(--text);
+}
+
+.top-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--accent);
+}
+
+.page { display: none; }
+.page.active { display: block; }
+
+/* ============ PAGE 1: SIMULATOR ============ */
+.sim-header {
+  margin-bottom: 28px;
+}
+.sim-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.sim-title {
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  margin-bottom: 6px;
+}
+.sim-sub {
+  font-size: 13px;
+  color: var(--mid);
+}
+
+.sim-layout {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+/* Controls */
+.controls-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  position: sticky;
+  top: 20px;
+}
+
+.ctrl-section {
+  margin-bottom: 22px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.ctrl-section:last-child { border-bottom: none; margin-bottom: 0; }
+
+.ctrl-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.ctrl-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--mid);
+  margin-bottom: 10px;
+}
+
+/* Toggle group */
+.toggle-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.toggle-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.15s;
+  background: var(--bg);
+}
+
+.toggle-item:hover { border-color: var(--border2); }
+.toggle-item.selected { border-color: currentColor; }
+
+.ti-left { display: flex; align-items: center; gap: 10px; }
+.ti-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.ti-name { font-size: 13px; font-weight: 600; }
+.ti-sub { font-size: 11px; color: var(--muted); }
+.ti-price {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ti-check {
+  width: 18px; height: 18px;
+  border-radius: 4px;
+  border: 2px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.toggle-item.selected .ti-check {
+  background: currentColor;
+  border-color: currentColor;
+  color: #fff;
+}
+.toggle-item.selected .ti-check::after { content: '✓'; color: #fff; font-weight: 700; }
+
+/* Tier selector */
+.tier-row {
+  display: flex;
+  gap: 6px;
+}
+
+.tier-btn {
+  flex: 1;
+  padding: 8px 4px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--bg);
+  color: var(--muted);
+  font-family: 'Noto Sans KR', sans-serif;
+  text-align: center;
+  transition: all 0.15s;
+}
+
+.tier-btn.active {
+  background: var(--text);
+  color: #fff;
+  border-color: var(--text);
+}
+
+/* Slider */
+.slider-wrap {
+  margin-top: 8px;
+}
+
+.slider-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.slider-unit {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+input[type=range] {
+  width: 100%;
+  -webkit-appearance: none;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  outline: none;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--text);
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+.slider-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 4px;
+  font-family: 'DM Mono', monospace;
+}
+
+/* Results panel */
+.results-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Big total card */
+.total-card {
+  background: var(--text);
+  color: #fff;
+  border-radius: 14px;
+  padding: 24px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tc-left {}
+.tc-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  opacity: 0.5;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+.tc-amount {
+  font-family: 'DM Mono', monospace;
+  font-size: 42px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+.tc-period {
+  font-size: 13px;
+  opacity: 0.5;
+  margin-top: 4px;
+}
+
+.tc-right {
+  text-align: right;
+}
+.tc-compare {
+  font-size: 12px;
+  opacity: 0.6;
+  margin-bottom: 4px;
+}
+.tc-save {
+  font-family: 'DM Mono', monospace;
+  font-size: 22px;
+  font-weight: 700;
+  color: #4fffb0;
+}
+.tc-save-label {
+  font-size: 11px;
+  color: #4fffb0;
+  opacity: 0.8;
+}
+
+/* Breakdown */
+.breakdown-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px 22px;
+}
+
+.bc-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.bc-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.bc-row:last-child { border-bottom: none; }
+
+.bc-left { display: flex; align-items: center; gap: 10px; }
+.bc-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.bc-name { font-size: 13px; font-weight: 600; }
+.bc-tier { font-size: 11px; color: var(--muted); }
+
+.bc-right { text-align: right; }
+.bc-price {
+  font-family: 'DM Mono', monospace;
+  font-size: 15px;
+  font-weight: 700;
+}
+.bc-note { font-size: 10px; color: var(--muted); }
+
+/* ROI card */
+.roi-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px 22px;
+}
+
+.roi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.roi-item {
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 14px 12px;
+  text-align: center;
+}
+
+.roi-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  line-height: 1;
+}
+.roi-label {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+/* Bar chart */
+.bar-chart {
+  margin-top: 14px;
+}
+
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.bar-label {
+  font-size: 11px;
+  color: var(--mid);
+  width: 100px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.bar-track {
+  flex: 1;
+  height: 20px;
+  background: var(--bg);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: #fff;
+  font-weight: 700;
+  transition: width 0.5s ease;
+}
+
+/* Recommendation badge */
+.rec-badge {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.rb-icon { font-size: 22px; flex-shrink: 0; }
+.rb-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+.rb-desc { font-size: 12px; color: var(--mid); line-height: 1.5; }
+
+/* ============ PAGE 2: GROWTH MATRIX ============ */
+
+.matrix-header {
+  margin-bottom: 28px;
+}
+
+/* Stage header bar */
+.stage-bar {
+  display: grid;
+  grid-template-columns: 160px repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.stage-cell {
+  border-radius: 10px;
+  padding: 16px 18px;
+  text-align: center;
+}
+
+.sc-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  opacity: 0.7;
+  margin-bottom: 4px;
+}
+.sc-name {
+  font-size: 15px;
+  font-weight: 900;
+  margin-bottom: 3px;
+}
+.sc-sub {
+  font-size: 11px;
+  opacity: 0.7;
+  line-height: 1.4;
+}
+
+/* Industry rows */
+.industry-row {
+  display: grid;
+  grid-template-columns: 160px repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.industry-label {
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px 12px;
+  color: #fff;
+}
+
+.il-icon { font-size: 22px; margin-bottom: 6px; }
+.il-name { font-size: 13px; font-weight: 900; }
+.il-sub { font-size: 10px; opacity: 0.7; margin-top: 3px; line-height: 1.4; }
+
+/* Matrix cell */
+.matrix-cell {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  transition: box-shadow 0.2s, border-color 0.2s;
+  cursor: default;
+}
+
+.matrix-cell:hover {
+  box-shadow: 0 3px 16px rgba(0,0,0,0.07);
+}
+
+.mc-growth {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.mc-needs {
+  margin-bottom: 10px;
+}
+
+.mc-need-title {
+  font-size: 10px;
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+.mc-need-item {
+  font-size: 11px;
+  color: var(--mid);
+  padding: 2px 0 2px 10px;
+  position: relative;
+  line-height: 1.5;
+}
+.mc-need-item::before {
+  content: '·';
+  position: absolute;
+  left: 2px;
+  font-weight: 900;
+}
+
+.mc-plan {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.mc-plan-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 4px;
+  margin-bottom: 5px;
+  letter-spacing: 0.5px;
+}
+
+.mc-plan-name {
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+
+.mc-plan-price {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.mc-kpi {
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* Priority dot */
+.priority-pip {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+/* Legend */
+.matrix-legend {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.ml-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--mid);
+}
+
+.ml-dot {
+  width: 10px; height: 10px;
+  border-radius: 3px;
+}
+
+/* Insight strip */
+.insight-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.is-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.is-stage {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.is-title {
+  font-size: 13px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.is-body {
+  font-size: 11px;
+  color: var(--mid);
+  line-height: 1.6;
+}
+
+@media (max-width: 900px) {
+  .sim-layout { grid-template-columns: 1fr; }
+  .controls-panel { position: static; }
+  .roi-grid { grid-template-columns: repeat(2,1fr); }
+  .stage-bar, .industry-row { grid-template-columns: 1fr; }
+  .insight-strip { grid-template-columns: 1fr; }
+  .industry-label { border-radius: 10px; flex-direction: row; gap: 10px; }
+}
+</style>
+</head>
+<body>
+
+<div class="top-tabs">
+  <button class="top-tab active" onclick="switchPage('sim')">💰 단가 시뮬레이터</button>
+  <button class="top-tab" onclick="switchPage('matrix')">📊 성장단계 × 업종 플랜 매트릭스</button>
+</div>
+
+<!-- ======== PAGE 1: SIMULATOR ======== -->
+<div class="page active" id="page-sim">
+
+  <div class="sim-header">
+    <div class="sim-label">GROWTHMAKER · Pricing Simulator</div>
+    <div class="sim-title">서비스 단가 시뮬레이터</div>
+    <div class="sim-sub">서비스 조합과 매출 규모를 선택하면 비용·ROI·절감액을 자동 계산합니다</div>
+  </div>
+
+  <div class="sim-layout">
+
+    <!-- Controls -->
+    <div class="controls-panel">
+
+      <div class="ctrl-section">
+        <div class="ctrl-label">Step 1</div>
+        <div class="ctrl-title">서비스 선택 (복수 가능)</div>
+        <div class="toggle-group">
+          <div class="toggle-item" id="ti-saas" style="color:var(--saas-col)" onclick="toggleService('saas')">
+            <div class="ti-left">
+              <div class="ti-dot" style="background:var(--saas-col)"></div>
+              <div>
+                <div class="ti-name">GOS SaaS</div>
+                <div class="ti-sub">대시보드 · 데이터 연동</div>
+              </div>
+            </div>
+            <div class="ti-check" id="chk-saas"></div>
+          </div>
+          <div class="toggle-item" id="ti-consult" style="color:var(--consult-col)" onclick="toggleService('consult')">
+            <div class="ti-left">
+              <div class="ti-dot" style="background:var(--consult-col)"></div>
+              <div>
+                <div class="ti-name">시니어 PM 컨설팅</div>
+                <div class="ti-sub">주/월간 전략 세션</div>
+              </div>
+            </div>
+            <div class="ti-check" id="chk-consult"></div>
+          </div>
+          <div class="toggle-item selected" id="ti-agency" style="color:var(--agency-col)" onclick="toggleService('agency')">
+            <div class="ti-left">
+              <div class="ti-dot" style="background:var(--agency-col)"></div>
+              <div>
+                <div class="ti-name">그로스PM 대행</div>
+                <div class="ti-sub">풀팀 실무 운영</div>
+              </div>
+            </div>
+            <div class="ti-check" id="chk-agency">✓</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ctrl-section">
+        <div class="ctrl-label">Step 2</div>
+        <div class="ctrl-title">플랜 티어</div>
+        <div id="tier-sections"></div>
+      </div>
+
+      <div class="ctrl-section">
+        <div class="ctrl-label">Step 3</div>
+        <div class="ctrl-title">현재 월 매출 규모</div>
+        <div class="slider-wrap">
+          <div class="slider-val" id="rev-val">1<span class="slider-unit">억원</span></div>
+          <input type="range" min="1" max="50" value="10" id="rev-slider" oninput="updateRevenue(this.value)">
+          <div class="slider-labels"><span>1천만</span><span>5억</span></div>
+        </div>
+      </div>
+
+      <div class="ctrl-section">
+        <div class="ctrl-label">Step 4</div>
+        <div class="ctrl-title">계약 기간</div>
+        <div class="tier-row">
+          <button class="tier-btn" onclick="setPeriod(1,this)">월간</button>
+          <button class="tier-btn active" onclick="setPeriod(3,this)">3개월</button>
+          <button class="tier-btn" onclick="setPeriod(6,this)">6개월</button>
+          <button class="tier-btn" onclick="setPeriod(12,this)">12개월</button>
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:var(--muted)" id="period-discount"></div>
+      </div>
+
+    </div>
+
+    <!-- Results -->
+    <div class="results-panel">
+
+      <div class="total-card">
+        <div class="tc-left">
+          <div class="tc-label">월 서비스 비용</div>
+          <div class="tc-amount" id="total-amount">300<span style="font-size:20px;opacity:0.6">만원</span></div>
+          <div class="tc-period" id="total-period">3개월 계약 · 총 900만원</div>
+        </div>
+        <div class="tc-right">
+          <div class="tc-compare">채용 대비 절감액</div>
+          <div class="tc-save" id="save-amount">+1,200만</div>
+          <div class="tc-save-label">월 절감 (vs 내부팀 구성)</div>
+        </div>
+      </div>
+
+      <div class="breakdown-card">
+        <div class="bc-title">서비스별 비용 breakdown</div>
+        <div id="breakdown-rows">
+          <div style="color:var(--muted);font-size:13px;padding:16px 0;text-align:center">서비스를 1개 이상 선택하세요</div>
+        </div>
+      </div>
+
+      <div class="roi-card">
+        <div class="bc-title">ROI 시뮬레이션</div>
+        <div class="roi-grid" id="roi-grid"></div>
+        <div class="bar-chart" id="bar-chart"></div>
+      </div>
+
+      <div class="rec-badge" id="rec-badge">
+        <div class="rb-icon">💡</div>
+        <div>
+          <div class="rb-title" id="rec-title">추천 코멘트</div>
+          <div class="rb-desc" id="rec-desc">서비스와 매출 규모를 선택하면 맞춤 추천을 드립니다.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ======== PAGE 2: MATRIX ======== -->
+<div class="page" id="page-matrix">
+
+  <div class="matrix-header">
+    <div class="sim-label">GROWTHMAKER · Growth Stage × Industry Matrix</div>
+    <div class="sim-title">성장단계 × 업종별<br>그로스 플랜 추천 매트릭스</div>
+    <div class="sim-sub">기업의 성장 단계와 업종에 따라 필요한 시스템과 최적 플랜이 다릅니다</div>
+  </div>
+
+  <div class="matrix-legend">
+    <div class="ml-item"><div class="ml-dot" style="background:var(--early)"></div>창업 초기</div>
+    <div class="ml-item"><div class="ml-dot" style="background:var(--growth)"></div>성장 중기</div>
+    <div class="ml-item"><div class="ml-dot" style="background:var(--scale)"></div>스케일 / 투자유치</div>
+    <div class="ml-item" style="margin-left:auto">
+      <span style="font-size:11px;color:var(--muted)">셀 클릭 시 상세 확인</span>
+    </div>
+  </div>
+
+  <!-- Stage header -->
+  <div class="stage-bar">
+    <div style="background:transparent"></div>
+    <div class="stage-cell" style="background:var(--early);color:#fff">
+      <div class="sc-num">STAGE 01</div>
+      <div class="sc-name">창업 초기</div>
+      <div class="sc-sub">매출 0~3억<br>PMF 탐색 단계</div>
+    </div>
+    <div class="stage-cell" style="background:var(--growth);color:#fff">
+      <div class="sc-num">STAGE 02</div>
+      <div class="sc-name">성장 중기</div>
+      <div class="sc-sub">매출 3~30억<br>채널 확장 단계</div>
+    </div>
+    <div class="stage-cell" style="background:var(--scale);color:#fff">
+      <div class="sc-num">STAGE 03</div>
+      <div class="sc-name">스케일 / 투자유치</div>
+      <div class="sc-sub">매출 30억+<br>지표 밸류업 단계</div>
+    </div>
+  </div>
+
+  <!-- Industry rows -->
+  <div id="matrix-body"></div>
+
+  <!-- Insight strip -->
+  <div class="insight-strip">
+    <div class="is-card">
+      <div class="is-stage" style="color:var(--early)">창업 초기 전략</div>
+      <div class="is-title">진단 → SaaS로 최소 비용 시작</div>
+      <div class="is-body">PMF가 확정되지 않은 단계에서 대행 풀패키지는 낭비. 진단으로 방향 잡고, SaaS로 데이터 구조 먼저 셋팅. 필요한 채널 1~2개에 집중.</div>
+    </div>
+    <div class="is-card">
+      <div class="is-stage" style="color:var(--growth)">성장 중기 전략</div>
+      <div class="is-title">컨설팅 + SaaS 조합이 최적</div>
+      <div class="is-body">채널이 검증된 단계. 시니어 PM이 전략을 짜고 내부가 실행하는 구조가 비용 효율 최고. 월 ROAS·CAC를 대시보드로 실시간 추적하며 예산 배분 최적화.</div>
+    </div>
+    <div class="is-card">
+      <div class="is-stage" style="color:var(--scale)">스케일 전략</div>
+      <div class="is-title">지표 밸류업 = 투자 협상력</div>
+      <div class="is-body">투자자가 보는 지표(CAC, LTV, MoM 성장률)를 대시보드로 증명 가능하게 만드는 것이 핵심. 대행 풀패키지로 빠른 실행 + 월간 리포트로 IR 소재 확보.</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ======== SIMULATOR DATA ========
+const services = {
+  saas: {
+    name: 'GOS SaaS',
+    color: '#1e4d8c',
+    tiers: [
+      { name: 'Basic', price: 29 },
+      { name: 'Pro', price: 59 },
+      { name: 'Scale', price: 99 },
+    ],
+    defaultTier: 1,
+    hireCost: 0
+  },
+  consult: {
+    name: '시니어 PM 컨설팅',
+    color: '#7c4d00',
+    tiers: [
+      { name: '월 2회', price: 50 },
+      { name: '주 1회', price: 120 },
+      { name: '주 2회', price: 220 },
+    ],
+    defaultTier: 0,
+    hireCost: 500
+  },
+  agency: {
+    name: '그로스PM 대행',
+    color: '#8b1a1a',
+    tiers: [
+      { name: 'Starter', price: 150 },
+      { name: 'Growth', price: 300 },
+      { name: 'Scale', price: 500 },
+    ],
+    defaultTier: 1,
+    hireCost: 1500
+  }
+};
+
+let state = {
+  selected: { saas: false, consult: false, agency: true },
+  tiers: { saas: 1, consult: 0, agency: 1 },
+  revenue: 10,
+  period: 3,
+  periodDiscount: { 1: 0, 3: 0, 6: 5, 12: 10 }
+};
+
+function toggleService(key) {
+  state.selected[key] = !state.selected[key];
+  const el = document.getElementById('ti-' + key);
+  const chk = document.getElementById('chk-' + key);
+  if (state.selected[key]) {
+    el.classList.add('selected');
+    chk.textContent = '✓';
+  } else {
+    el.classList.remove('selected');
+    chk.textContent = '';
+  }
+  renderTierSections();
+  updateCalc();
+}
+
+function renderTierSections() {
+  const wrap = document.getElementById('tier-sections');
+  wrap.innerHTML = '';
+  Object.entries(services).forEach(([key, svc]) => {
+    if (!state.selected[key]) return;
+    const div = document.createElement('div');
+    div.style.marginBottom = '14px';
+    div.innerHTML = `
+      <div style="font-size:11px;font-weight:700;color:${svc.color};margin-bottom:6px;font-family:'DM Mono',monospace;letter-spacing:1px">${svc.name}</div>
+      <div class="tier-row">
+        ${svc.tiers.map((t, i) => `
+          <button class="tier-btn ${state.tiers[key] === i ? 'active' : ''}"
+            onclick="setTier('${key}', ${i}, this)"
+            style="${state.tiers[key] === i ? `background:${svc.color};border-color:${svc.color}` : ''}">
+            ${t.name}<br><span style="font-family:'DM Mono',monospace;font-size:10px">${t.price}만</span>
+          </button>
+        `).join('')}
+      </div>
+    `;
+    wrap.appendChild(div);
+  });
+  if (wrap.innerHTML === '') {
+    wrap.innerHTML = '<div style="font-size:12px;color:var(--muted)">서비스를 먼저 선택하세요</div>';
+  }
+}
+
+function setTier(key, idx, btn) {
+  state.tiers[key] = idx;
+  renderTierSections();
+  updateCalc();
+}
+
+function updateRevenue(val) {
+  state.revenue = parseInt(val);
+  const display = val < 10 ? (val * 1000 + '만') : (val + '천만');
+  document.getElementById('rev-val').innerHTML = val >= 10 
+    ? `${val/10}<span class="slider-unit">억원</span>` 
+    : `${val*1000}<span class="slider-unit">만원</span>`;
+  updateCalc();
+}
+
+function setPeriod(p, btn) {
+  state.period = p;
+  document.querySelectorAll('.tier-row .tier-btn').forEach(b => {
+    if (b.closest('#page-sim') && b.onclick && b.onclick.toString().includes('setPeriod')) {
+      b.classList.remove('active');
+    }
+  });
+  btn.classList.add('active');
+  const disc = state.periodDiscount[p];
+  document.getElementById('period-discount').textContent = disc > 0 ? `✓ ${disc}% 장기 계약 할인 적용` : '';
+  updateCalc();
+}
+
+function fmt(n) {
+  if (n >= 10000) return (n/10000).toFixed(1) + '억';
+  return n.toLocaleString() + '만';
+}
+
+function updateCalc() {
+  const sel = Object.entries(state.selected).filter(([k,v]) => v).map(([k]) => k);
+  
+  if (sel.length === 0) {
+    document.getElementById('total-amount').innerHTML = '0<span style="font-size:20px;opacity:0.6">만원</span>';
+    document.getElementById('breakdown-rows').innerHTML = '<div style="color:var(--muted);font-size:13px;padding:16px 0;text-align:center">서비스를 1개 이상 선택하세요</div>';
+    document.getElementById('roi-grid').innerHTML = '';
+    document.getElementById('bar-chart').innerHTML = '';
+    return;
+  }
+
+  const disc = state.periodDiscount[state.period] / 100;
+  let total = 0;
+  let hireCost = 0;
+  let breakdownHTML = '';
+
+  sel.forEach(key => {
+    const svc = services[key];
+    const tier = svc.tiers[state.tiers[key]];
+    const price = Math.round(tier.price * (1 - disc));
+    total += price;
+    hireCost += svc.hireCost;
+    breakdownHTML += `
+      <div class="bc-row">
+        <div class="bc-left">
+          <div class="bc-dot" style="background:${svc.color}"></div>
+          <div>
+            <div class="bc-name">${svc.name}</div>
+            <div class="bc-tier">${tier.name} 플랜${disc > 0 ? ` · ${state.periodDiscount[state.period]}% 할인` : ''}</div>
+          </div>
+        </div>
+        <div class="bc-right">
+          <div class="bc-price" style="color:${svc.color}">${price.toLocaleString()}만원</div>
+          <div class="bc-note">월 기준</div>
+        </div>
+      </div>
+    `;
+  });
+
+  // Hire cost of internal team comparison
+  const internalCost = hireCost > 0 ? hireCost : 500;
+  const savings = internalCost - total;
+
+  document.getElementById('total-amount').innerHTML = `${total.toLocaleString()}<span style="font-size:20px;opacity:0.6">만원</span>`;
+  document.getElementById('total-period').textContent = `${state.period}개월 계약 · 총 ${(total * state.period).toLocaleString()}만원`;
+  document.getElementById('save-amount').textContent = `${savings >= 0 ? '+' : ''}${savings.toLocaleString()}만`;
+  document.getElementById('breakdown-rows').innerHTML = breakdownHTML;
+
+  // ROI
+  const rev = state.revenue * 1000; // 만원 단위
+  const growthRate = 0.179;
+  const expectedGrowth = Math.round(rev * growthRate / 100) * 100;
+  const roi = Math.round((expectedGrowth / total) * 10) / 10;
+  const payback = Math.round((total / (expectedGrowth / 12)) * 10) / 10;
+
+  document.getElementById('roi-grid').innerHTML = `
+    <div class="roi-item">
+      <div class="roi-num" style="color:var(--early)">${fmt(total)}</div>
+      <div class="roi-label">월 서비스 비용</div>
+    </div>
+    <div class="roi-item">
+      <div class="roi-num" style="color:var(--growth)">${fmt(expectedGrowth)}</div>
+      <div class="roi-label">예상 월 추가 매출<br>(avg +17.9%)</div>
+    </div>
+    <div class="roi-item">
+      <div class="roi-num" style="color:var(--scale)">${roi}x</div>
+      <div class="roi-label">투자 대비<br>매출 성장 배수</div>
+    </div>
+    <div class="roi-item">
+      <div class="roi-num" style="color:#e8401c">${payback}개월</div>
+      <div class="roi-label">예상 투자<br>회수 기간</div>
+    </div>
+  `;
+
+  // Bar chart
+  const maxBar = Math.max(total, expectedGrowth, internalCost);
+  document.getElementById('bar-chart').innerHTML = `
+    <div class="bar-row">
+      <div class="bar-label">서비스 비용</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${Math.round(total/maxBar*100)}%;background:var(--agency-col)">${total.toLocaleString()}만</div>
+      </div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">예상 매출 증가</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${Math.round(expectedGrowth/maxBar*100)}%;background:var(--early)">${fmt(expectedGrowth)}</div>
+      </div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-label">내부팀 채용 비용</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${Math.round(internalCost/maxBar*100)}%;background:var(--muted)">${internalCost.toLocaleString()}만</div>
+      </div>
+    </div>
+  `;
+
+  // Recommendation
+  let recTitle, recDesc;
+  if (total < 100) {
+    recTitle = '💡 SaaS 단독 시작 추천';
+    recDesc = '현재 구성은 데이터 인프라 구축에 집중된 플랜입니다. 매출 규모 대비 최소 비용으로 시작하기에 적합. 3개월 운영 후 컨설팅 추가를 검토하세요.';
+  } else if (sel.includes('agency') && !sel.includes('saas')) {
+    recTitle = '⚠ SaaS 병행을 강력 추천';
+    recDesc = '대행만 이용하면 데이터 가시성이 낮아 성과 추적이 어렵습니다. GOS SaaS를 함께 구독하면 대행팀 성과를 실시간으로 확인할 수 있습니다.';
+  } else if (roi > 5) {
+    recTitle = '🚀 현재 구성 ROI 매우 우수';
+    recDesc = `예상 매출 증가액(${fmt(expectedGrowth)})이 서비스 비용(${total}만원)의 ${roi}배입니다. 장기 계약 시 추가 할인을 적용받으면 ROI가 더욱 높아집니다.`;
+  } else {
+    recTitle = '📊 합리적인 구성';
+    recDesc = `월 ${total}만원 투자로 예상 매출 성장 ${fmt(expectedGrowth)}을 기대할 수 있습니다. 6개월 이상 계약 시 5~10% 추가 할인이 적용됩니다.`;
+  }
+
+  document.getElementById('rec-title').textContent = recTitle;
+  document.getElementById('rec-desc').textContent = recDesc;
+}
+
+// ======== MATRIX DATA ========
+const industries = [
+  {
+    key: 'ec',
+    icon: '🛒',
+    name: '이커머스',
+    sub: '쇼핑몰·D2C',
+    color: '#e8401c',
+    stages: [
+      {
+        growth: '첫 매출 만들기',
+        needs: ['메타/구글 광고 기초 셋팅', '쇼핑몰 전환율 최적화', 'GA4 기본 트래킹'],
+        plan: 'SaaS Basic + 진단',
+        price: '49만원/월',
+        kpi: '첫 ROAS 목표 300% 달성',
+        color: '#2d6a4f'
+      },
+      {
+        growth: 'ROAS·재구매율 극대화',
+        needs: ['퍼포먼스 마케팅 최적화', 'CRM 리텐션 캠페인', '객단가·전환율 A/B테스트'],
+        plan: 'SaaS Pro + 컨설팅',
+        price: '179만원/월',
+        kpi: 'ROAS 1000%+ · 재구매율 30%+',
+        color: '#1e4d8c'
+      },
+      {
+        growth: '채널 다각화·밸류업',
+        needs: ['멀티채널 통합 관리', '브랜드 인지도 광고', '투자자용 KPI 대시보드'],
+        plan: '대행 Growth + SaaS',
+        price: '359만원/월',
+        kpi: 'MoM 성장률 15%+ · LTV 증가',
+        color: '#7c1f8c'
+      }
+    ]
+  },
+  {
+    key: 'app',
+    icon: '📱',
+    name: '앱 서비스',
+    sub: '모바일·플랫폼',
+    color: '#1e6fbf',
+    stages: [
+      {
+        growth: '설치 → 활성화 구조 확립',
+        needs: ['앱 설치 캠페인 셋팅', '온보딩 전환율 개선', 'DAU/MAU 트래킹'],
+        plan: 'SaaS Basic + 진단',
+        price: '49만원/월',
+        kpi: 'CPI 최소화 · D7 리텐션 30%+',
+        color: '#2d6a4f'
+      },
+      {
+        growth: '리텐션·수익화 최적화',
+        needs: ['푸시/이메일 리텐션 자동화', '인앱 결제 전환 최적화', '코호트 분석'],
+        plan: 'SaaS Pro + 컨설팅',
+        price: '179만원/월',
+        kpi: 'D30 리텐션 20%+ · ARPU 성장',
+        color: '#1e4d8c'
+      },
+      {
+        growth: 'MAU 폭발 성장·IR',
+        needs: ['그로스 루프 설계', 'UA 예산 대규모 집행', 'MoM 성장률 IR 소재화'],
+        plan: '대행 Scale + SaaS',
+        price: '599만원/월',
+        kpi: 'MoM MAU 20%+ · 시리즈A 지표',
+        color: '#7c1f8c'
+      }
+    ]
+  },
+  {
+    key: 'saas',
+    icon: '💻',
+    name: 'B2B SaaS',
+    sub: '구독·소프트웨어',
+    color: '#2d6a4f',
+    stages: [
+      {
+        growth: '초기 고객 10개사 확보',
+        needs: ['잠재고객 DB 수집 구조', '도입 문의 CTA 최적화', 'LinkedIn·콘텐츠 마케팅'],
+        plan: 'SaaS Basic + 진단',
+        price: '49만원/월',
+        kpi: 'DB 월 100건+ · CPA 10만원 이하',
+        color: '#2d6a4f'
+      },
+      {
+        growth: 'MRR 성장·이탈 방어',
+        needs: ['리텐션·CSM 자동화', '업셀링·확장 MRR 전략', 'NPS 기반 리텐션'],
+        plan: 'SaaS Pro + 컨설팅',
+        price: '179만원/월',
+        kpi: 'MRR 성장률 10%+ · 이탈률 5% 이하',
+        color: '#1e4d8c'
+      },
+      {
+        growth: 'ARR 밸류업·시리즈A',
+        needs: ['ARR·NRR 지표 구조화', 'ABM 영업 자동화', '투자자 KPI 대시보드'],
+        plan: '대행 Growth + SaaS',
+        price: '359만원/월',
+        kpi: 'ARR 10억+ · NRR 120%+',
+        color: '#7c1f8c'
+      }
+    ]
+  },
+  {
+    key: 'beauty',
+    icon: '✨',
+    name: '뷰티·브랜드',
+    sub: '스킨케어·패션',
+    color: '#b5507a',
+    stages: [
+      {
+        growth: '브랜드 인지 + 첫 구매',
+        needs: ['인스타/틱톡 광고 셋팅', '첫 구매 전환 페이지 최적화', '인플루언서 ROI 측정'],
+        plan: 'SaaS Basic + 진단',
+        price: '49만원/월',
+        kpi: '첫 구매 CPA 3만원 이하',
+        color: '#2d6a4f'
+      },
+      {
+        growth: '재구매·팬덤 구축',
+        needs: ['LTV 기반 CRM 설계', '구독·정기배송 전환', '리뷰·바이럴 자동화'],
+        plan: 'SaaS Pro + 컨설팅',
+        price: '179만원/월',
+        kpi: '재구매율 40%+ · LTV 15만원+',
+        color: '#1e4d8c'
+      },
+      {
+        growth: '멀티채널·글로벌 확장',
+        needs: ['해외 광고 채널 진출', '옴니채널 통합 관리', '브랜드 가치 지표화'],
+        plan: '대행 Scale + SaaS',
+        price: '599만원/월',
+        kpi: '해외 매출 비중 20%+ · 브랜드서치 증가',
+        color: '#7c1f8c'
+      }
+    ]
+  },
+  {
+    key: 'local',
+    icon: '🏪',
+    name: '로컬·O2O',
+    sub: '오프라인+온라인',
+    color: '#7c5c00',
+    stages: [
+      {
+        growth: '온라인 유입 구조 첫 셋팅',
+        needs: ['네이버·카카오 광고 셋팅', '예약/방문 전환 추적', '지역 검색 최적화'],
+        plan: 'SaaS Basic + 진단',
+        price: '49만원/월',
+        kpi: '온라인→오프라인 전환율 측정',
+        color: '#2d6a4f'
+      },
+      {
+        growth: '재방문·단골 고객 확보',
+        needs: ['카카오채널 CRM 자동화', '멤버십·포인트 설계', '구매 데이터 분석'],
+        plan: 'SaaS Pro + 컨설팅',
+        price: '179만원/월',
+        kpi: '재방문율 50%+ · 객단가 20%+',
+        color: '#1e4d8c'
+      },
+      {
+        growth: '프랜차이즈·확장 모델',
+        needs: ['멀티점포 통합 대시보드', '가맹점 마케팅 시스템화', '확장 모델 지표 정립'],
+        plan: '대행 Growth + SaaS',
+        price: '359만원/월',
+        kpi: '점포당 매출 균일화 · 가맹 모델 완성',
+        color: '#7c1f8c'
+      }
+    ]
+  }
+];
+
+const stageColors = ['var(--early)', 'var(--growth)', 'var(--scale)'];
+const stageBgs = ['#edf7f2', '#edf2fc', '#f5edf8'];
+
+function renderMatrix() {
+  const body = document.getElementById('matrix-body');
+  body.innerHTML = '';
+  industries.forEach(ind => {
+    const row = document.createElement('div');
+    row.className = 'industry-row';
+
+    // Label
+    row.innerHTML = `
+      <div class="industry-label" style="background:${ind.color}">
+        <div class="il-icon">${ind.icon}</div>
+        <div class="il-name">${ind.name}</div>
+        <div class="il-sub">${ind.sub}</div>
+      </div>
+    `;
+
+    // Cells
+    ind.stages.forEach((stage, i) => {
+      const cell = document.createElement('div');
+      cell.className = 'matrix-cell';
+      cell.style.borderTop = `3px solid ${stage.color}`;
+      cell.innerHTML = `
+        <div class="mc-growth" style="color:${stage.color}">
+          <span class="priority-pip" style="background:${stage.color}"></span>${stage.growth}
+        </div>
+        <div class="mc-needs">
+          <div class="mc-need-title">필요 시스템</div>
+          ${stage.needs.map(n => `<div class="mc-need-item">${n}</div>`).join('')}
+        </div>
+        <div class="mc-plan">
+          <span class="mc-plan-badge" style="background:${stageBgs[i]};color:${stage.color}">추천 플랜</span>
+          <div class="mc-plan-name">${stage.plan}</div>
+          <div class="mc-plan-price" style="color:${stage.color}">${stage.price}</div>
+          <div class="mc-kpi">🎯 ${stage.kpi}</div>
+        </div>
+      `;
+      row.appendChild(cell);
+    });
+
+    body.appendChild(row);
+  });
+}
+
+// ======== INIT ========
+function switchPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.top-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  event.target.classList.add('active');
+}
+
+renderTierSections();
+updateCalc();
+renderMatrix();
+</script>
+</body>
+</html>

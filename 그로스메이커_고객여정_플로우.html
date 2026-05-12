@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>그로스메이커 고객 여정 플로우</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg: #0d0f14;
+  --s1: #e8401c;
+  --s2: #2d9e6b;
+  --s3: #2b7de9;
+  --s4: #e0a020;
+  --s5: #c0392b;
+  --s6: #7f8c8d;
+  --text: #f0f2f5;
+  --muted: #8892a4;
+  --border: #1e2330;
+  --surface: #141820;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans KR', sans-serif;
+  padding: 36px 32px;
+  min-height: 100vh;
+}
+
+.page-header {
+  margin-bottom: 36px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.ph-left {}
+.ph-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.ph-title {
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1.25;
+}
+.ph-sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+.ph-right {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.legend-dot {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.ldot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+/* Flow container */
+.flow-wrap {
+  position: relative;
+}
+
+/* Entry row */
+.entry-row {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.entry-node {
+  background: var(--surface);
+  border: 1px dashed #3a3f4e;
+  border-radius: 40px;
+  padding: 12px 28px;
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.entry-icon { font-size: 16px; }
+
+/* Connector */
+.connector-v {
+  display: flex;
+  justify-content: center;
+  margin: 4px 0;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* Main flow row */
+.flow-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin-bottom: 4px;
+  position: relative;
+}
+
+/* Step node */
+.step-node {
+  flex-shrink: 0;
+  width: 220px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.sn-header {
+  padding: 14px 16px 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sn-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  opacity: 0.6;
+  letter-spacing: 1px;
+}
+
+.sn-name {
+  font-size: 14px;
+  font-weight: 900;
+  flex: 1;
+}
+
+.sn-body {
+  padding: 0 16px 14px;
+}
+
+.sn-desc {
+  font-size: 11px;
+  color: rgba(255,255,255,0.65);
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+
+.sn-price {
+  display: inline-block;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 5px;
+  background: rgba(255,255,255,0.1);
+}
+
+/* Arrow connector */
+.arrow-h {
+  display: flex;
+  align-items: center;
+  padding: 0 6px;
+  color: var(--muted);
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* Branch section */
+.branch-section {
+  margin: 8px 0 8px 110px;
+  position: relative;
+}
+
+.branch-line-h {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 100%;
+  height: 1px;
+  background: var(--border);
+  z-index: 0;
+}
+
+.branch-row {
+  display: flex;
+  gap: 12px;
+  position: relative;
+  z-index: 1;
+}
+
+.branch-node {
+  flex: 1;
+  background: var(--surface);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  padding: 14px 16px;
+  position: relative;
+}
+
+.branch-node::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 12px;
+  background: var(--border);
+  top: -12px;
+}
+
+.bn-tag {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  font-family: 'DM Mono', monospace;
+}
+
+.bn-title {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.bn-desc {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.bn-price {
+  display: inline-block;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  margin-top: 8px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.06);
+  color: var(--muted);
+}
+
+/* Branch header */
+.branch-label {
+  display: flex;
+  justify-content: center;
+  margin: 6px 0 10px;
+}
+
+.bl-pill {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 5px 16px;
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Guarantee banner */
+.guarantee-banner {
+  margin-top: 12px;
+  background: var(--surface);
+  border: 1px solid #2e3240;
+  border-left: 3px solid var(--s1);
+  border-radius: 10px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.gb-icon { font-size: 24px; flex-shrink: 0; }
+
+.gb-title {
+  font-size: 14px;
+  font-weight: 900;
+  margin-bottom: 4px;
+}
+
+.gb-desc {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.gb-right {
+  margin-left: auto;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.gb-metric {
+  font-family: 'DM Mono', monospace;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--s1);
+}
+
+.gb-metric-label {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* Outcome row */
+.outcome-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.outcome-card {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 16px;
+  text-align: center;
+}
+
+.oc-emoji { font-size: 20px; margin-bottom: 8px; }
+.oc-title { font-size: 12px; font-weight: 700; margin-bottom: 5px; }
+.oc-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+.oc-label { font-size: 10px; color: var(--muted); }
+
+/* Section divider */
+.section-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin: 20px 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* Vertical flow */
+.vflow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+/* Decision diamond */
+.decision-node {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  position: relative;
+  min-width: 200px;
+}
+
+.dn-q {
+  font-size: 10px;
+  color: var(--muted);
+  margin-bottom: 4px;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 1px;
+}
+
+/* Full customer journey table */
+.journey-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.journey-table th {
+  padding: 12px 14px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--muted);
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  background: #0f1218;
+}
+
+.journey-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  color: rgba(240,242,245,0.85);
+  vertical-align: top;
+  line-height: 1.6;
+}
+
+.journey-table tr:last-child td { border-bottom: none; }
+.journey-table tr:hover td { background: #181c26; }
+
+.stage-badge {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.emotion-chip {
+  display: inline-block;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.06);
+  color: var(--muted);
+}
+
+.action-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.action-item {
+  font-size: 11px;
+  color: var(--muted);
+  padding-left: 12px;
+  position: relative;
+}
+.action-item::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  font-size: 9px;
+}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="ph-left">
+    <div class="ph-label">GROWTHMAKER · Customer Journey Flow</div>
+    <div class="ph-title">고객 여정<br>플로우 다이어그램</div>
+    <div class="ph-sub">진단 → 추천 → SaaS/컨설팅/대행 분기 → PM 교체 보장</div>
+  </div>
+  <div class="ph-right">
+    <div class="legend-dot"><div class="ldot" style="background:var(--s1)"></div>진단</div>
+    <div class="legend-dot"><div class="ldot" style="background:var(--s2)"></div>플랜</div>
+    <div class="legend-dot"><div class="ldot" style="background:var(--s3)"></div>SaaS</div>
+    <div class="legend-dot"><div class="ldot" style="background:var(--s4)"></div>컨설팅</div>
+    <div class="legend-dot"><div class="ldot" style="background:var(--s5)"></div>대행</div>
+  </div>
+</div>
+
+<!-- ENTRY -->
+<div class="entry-row">
+  <div class="entry-node">
+    <span class="entry-icon">🏢</span>
+    잠재 고객 유입 — "마케팅은 하는데 매출이 안 오른다"
+  </div>
+</div>
+<div class="connector-v">↓</div>
+
+<!-- STEP 1: 진단 -->
+<div style="display:flex; justify-content:center; margin-bottom:4px;">
+  <div class="step-node" style="border-color:var(--s1)33; width: 340px;">
+    <div class="sn-header" style="background:linear-gradient(135deg, #e8401c22, #e8401c08)">
+      <span class="sn-num">STEP 01</span>
+      <span class="sn-name" style="color:var(--s1)">성장 진단</span>
+      <span style="font-size:18px">🔍</span>
+    </div>
+    <div class="sn-body">
+      <div class="sn-desc">그로스PM이 현재 매출·퍼널·광고 데이터 분석<br>→ 어떤 지표를 높여야 하는지 명확히 제시</div>
+      <span class="sn-price" style="color:var(--s1)">무료 ~ 29만원</span>
+      <span class="sn-price" style="margin-left:6px; color:var(--muted)">30분 상담 포함</span>
+    </div>
+  </div>
+</div>
+<div class="connector-v">↓</div>
+
+<!-- STEP 2: 플랜 추천 -->
+<div style="display:flex; justify-content:center; margin-bottom:4px;">
+  <div class="step-node" style="border-color:var(--s2)33; width:340px;">
+    <div class="sn-header" style="background:linear-gradient(135deg, #2d9e6b22, #2d9e6b08)">
+      <span class="sn-num">STEP 02</span>
+      <span class="sn-name" style="color:var(--s2)">그로스 플랜 추천</span>
+      <span style="font-size:18px">📋</span>
+    </div>
+    <div class="sn-body">
+      <div class="sn-desc">진단 결과 기반 최적 서비스 조합 추천<br>→ 3가지 선택지 이하로 단순화, 결정 피로 제거</div>
+      <span class="sn-price" style="color:var(--s2)">온보딩 포함 무료</span>
+    </div>
+  </div>
+</div>
+<div class="connector-v">↓</div>
+
+<!-- DECISION -->
+<div style="display:flex; justify-content:center; margin-bottom:6px;">
+  <div class="decision-node">
+    <div class="dn-q">DECISION POINT</div>
+    고객의 현재 상황과 니즈는?
+  </div>
+</div>
+
+<!-- Branch label -->
+<div style="display:flex; justify-content:center; margin-bottom:16px;">
+  <div style="display:flex; gap:8px; color:var(--muted); font-size:12px; align-items:center;">
+    <span>자체 운영 가능</span>
+    <span style="font-size:18px; color:var(--border)">←——————</span>
+    <span style="font-size:16px">🔀</span>
+    <span style="font-size:18px; color:var(--border)">——————→</span>
+    <span>전문가 필요</span>
+  </div>
+</div>
+
+<!-- 3-way branch -->
+<div class="branch-row" style="position:relative; z-index:1; margin-bottom:8px;">
+
+  <!-- SaaS -->
+  <div class="branch-node" style="border-top: 3px solid var(--s3);">
+    <div class="bn-tag" style="color:var(--s3)">SaaS · 셀프서브</div>
+    <div class="bn-title">GOS SaaS 구독</div>
+    <div class="bn-desc">
+      데이터 대시보드·퍼널 관리·광고 연동을 자체적으로 운영.<br>
+      인력 없이 데이터 기반 의사결정 가능.
+    </div>
+    <span class="bn-price">월 29~99만원</span>
+  </div>
+
+  <!-- 컨설팅 -->
+  <div class="branch-node" style="border-top: 3px solid var(--s4);">
+    <div class="bn-tag" style="color:var(--s4)">컨설팅 · 전략 지원</div>
+    <div class="bn-title">시니어 PM 컨설팅</div>
+    <div class="bn-desc">
+      주/월간 시니어 그로스PM 세션.<br>
+      데이터는 보이는데 "어떻게 움직여야 하는지" 막힐 때.
+    </div>
+    <span class="bn-price">월 50~150만원</span>
+  </div>
+
+  <!-- 대행 -->
+  <div class="branch-node" style="border-top: 3px solid var(--s5);">
+    <div class="bn-tag" style="color:var(--s5)">대행 · 풀매니지드</div>
+    <div class="bn-title">그로스PM 실무 대행</div>
+    <div class="bn-desc">
+      그로스PM + 마케터·엔지니어 풀팀 배정.<br>
+      채용 없이 즉시 실행 팀 확보, 사내 팀처럼 운영.
+    </div>
+    <span class="bn-price">월 150~500만원</span>
+  </div>
+
+</div>
+
+<!-- 업셀 화살표 -->
+<div style="display:flex; justify-content:center; gap:60px; margin:6px 0; font-size:11px; color:var(--muted);">
+  <span>⬆ SaaS → 컨설팅 업셀</span>
+  <span>⬆ 컨설팅 → 대행 업셀</span>
+</div>
+
+<div class="connector-v">↓</div>
+
+<!-- 교체 보장 -->
+<div style="margin:6px 0;">
+  <div class="guarantee-banner">
+    <div class="gb-icon">🔄</div>
+    <div>
+      <div class="gb-title">STEP 06 · PM 즉시 교체 보장</div>
+      <div class="gb-desc">
+        성과 미흡 또는 핏이 맞지 않으면 <strong style="color:var(--text)">즉시 교체.</strong> 추가 비용 없음.<br>
+        채용과 달리 담당자 교체에 감정·비용 소모 없음 — 주도권은 항상 고객에게.
+      </div>
+    </div>
+    <div class="gb-right">
+      <div class="gb-metric">0원</div>
+      <div class="gb-metric-label">교체 추가 비용</div>
+    </div>
+  </div>
+</div>
+
+<div class="connector-v">↓</div>
+
+<!-- 결과 -->
+<div class="outcome-row">
+  <div class="outcome-card">
+    <div class="oc-emoji">📈</div>
+    <div class="oc-title">평균 매출 성장</div>
+    <div class="oc-num" style="color:var(--s2)">+17.9%</div>
+    <div class="oc-label">계약 후 평균 증가율</div>
+  </div>
+  <div class="outcome-card">
+    <div class="oc-emoji">🎯</div>
+    <div class="oc-title">Meta ROAS</div>
+    <div class="oc-num" style="color:var(--s3)">1164%</div>
+    <div class="oc-label">퍼포먼스 마케팅 실적</div>
+  </div>
+  <div class="outcome-card">
+    <div class="oc-emoji">💸</div>
+    <div class="oc-title">CPA 감소</div>
+    <div class="oc-num" style="color:var(--s4)">-61%</div>
+    <div class="oc-label">획득 비용 절감</div>
+  </div>
+  <div class="outcome-card">
+    <div class="oc-emoji">🏢</div>
+    <div class="oc-title">도입 기업</div>
+    <div class="oc-num" style="color:var(--s5)">200+</div>
+    <div class="oc-label">누적 파트너사</div>
+  </div>
+</div>
+
+<!-- 고객 여정 상세 테이블 -->
+<div class="section-label">고객 여정 단계별 상세 분석</div>
+
+<table class="journey-table">
+  <thead>
+    <tr>
+      <th>단계</th>
+      <th>고객 상황 & 감정</th>
+      <th>그로스메이커 액션</th>
+      <th>이탈 리스크</th>
+      <th>전환 핵심 메시지</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><span class="stage-badge" style="background:var(--s1);display:inline-block"></span><strong>인지</strong><br><span style="color:var(--muted);font-size:10px">Awareness</span></td>
+      <td>
+        <span class="emotion-chip">😤 답답함</span><br>
+        "마케팅 비용 쓰는데 매출이 안 오름<br>뭘 해야할지 모르겠음"
+      </td>
+      <td>
+        <div class="action-list">
+          <div class="action-item">콘텐츠·SEO로 문제 인식 고객 유입</div>
+          <div class="action-item">무료 진단 CTA 전면 배치</div>
+          <div class="action-item">"30분 상담" 진입장벽 최소화</div>
+        </div>
+      </td>
+      <td style="color:#e0a020;font-size:11px">신뢰 부족으로 이탈<br>→ 실적 수치 전면 노출</td>
+      <td style="font-weight:700;font-size:12px">"채용보다 빠르고<br>대행보다 정확하게"</td>
+    </tr>
+    <tr>
+      <td><span class="stage-badge" style="background:var(--s1);display:inline-block"></span><strong>진단</strong><br><span style="color:var(--muted);font-size:10px">Diagnosis</span></td>
+      <td>
+        <span class="emotion-chip">🤔 기대 반 의심 반</span><br>
+        "진단이 진짜 도움이 될까?<br>어차피 상품 팔려는 거 아냐?"
+      </td>
+      <td>
+        <div class="action-list">
+          <div class="action-item">객관적 데이터 기반 진단 리포트 제공</div>
+          <div class="action-item">문제점 솔직하게 제시 (신뢰 우선)</div>
+          <div class="action-item">진단 결과 템플릿 표준화</div>
+        </div>
+      </td>
+      <td style="color:#e0a020;font-size:11px">"판매용 진단" 인식<br>→ 중립적 리포트 설계</td>
+      <td style="font-weight:700;font-size:12px">"지표를 보면<br>답이 보입니다"</td>
+    </tr>
+    <tr>
+      <td><span class="stage-badge" style="background:var(--s2);display:inline-block"></span><strong>플랜 추천</strong><br><span style="color:var(--muted);font-size:10px">Recommendation</span></td>
+      <td>
+        <span class="emotion-chip">😰 결정 부담</span><br>
+        "뭘 사야 하는지 모르겠고<br>비용이 부담됨"
+      </td>
+      <td>
+        <div class="action-list">
+          <div class="action-item">3개 이하 플랜으로 단순화</div>
+          <div class="action-item">ROI 예상치 함께 제시</div>
+          <div class="action-item">월 이용 후 플랜 변경 가능 명시</div>
+        </div>
+      </td>
+      <td style="color:#e8401c;font-size:11px; font-weight:700">⚠ 최고 이탈 구간<br>→ 가격 저항 극복 필수</td>
+      <td style="font-weight:700;font-size:12px">"1달 해보고<br>바꿀 수 있습니다"</td>
+    </tr>
+    <tr>
+      <td><span class="stage-badge" style="background:var(--s3);display:inline-block"></span><strong>SaaS 이용</strong><br><span style="color:var(--muted);font-size:10px">Self-serve</span></td>
+      <td>
+        <span class="emotion-chip">🧐 탐색 중</span><br>
+        "직접 써보면서 파악 중<br>데이터는 보이는데 해석이 어려움"
+      </td>
+      <td>
+        <div class="action-list">
+          <div class="action-item">온보딩 가이드 & 튜토리얼</div>
+          <div class="action-item">주간 인사이트 리포트 자동 발송</div>
+          <div class="action-item">컨설팅 업셀 CTA 자연스럽게 노출</div>
+        </div>
+      </td>
+      <td style="color:#e0a020;font-size:11px">활성화 실패로 해지<br>→ 초기 30일 케어 중요</td>
+      <td style="font-weight:700;font-size:12px">"데이터가 알아서<br>찾아줍니다"</td>
+    </tr>
+    <tr>
+      <td><span class="stage-badge" style="background:var(--s4);display:inline-block"></span><strong>컨설팅</strong><br><span style="color:var(--muted);font-size:10px">Advisory</span></td>
+      <td>
+        <span class="emotion-chip">🧠 전략 고민</span><br>
+        "데이터는 보이는데<br>어떻게 움직여야 할지 모르겠음"
+      </td>
+      <td>
+        <div class="action-list">
+          <div class="action-item">시니어 PM 주/월 정기 세션</div>
+          <div class="action-item">KPI 점검 & 액션 플랜 제시</div>
+          <div class="action-item">대행 전환 판단 시점 포착</div>
+        </div>
+      </td>
+      <td style="color:#e0a020;font-size:11px">세션 효과 체감 안 될 시<br>→ 결과 가시화 중요</td>
+      <td style="font-weight:700;font-size:12px">"시니어가 직접<br>봐드립니다"</td>
+    </tr>
+    <tr>
+      <td><span class="stage-badge" style="background:var(--s5);display:inline-block"></span><strong>대행</strong><br><span style="color:var(--muted);font-size:10px">Full-managed</span></td>
+      <td>
+        <span class="emotion-chip">😌 위임 상태</span><br>
+        "실행까지 다 맡기고 싶은데<br>성과 안 나면 어쩌지?"
+      </td>
+      <td>
+        <div class="action-list">
+          <div class="action-item">그로스PM 팀 즉시 배정</div>
+          <div class="action-item">주간/월간 투명한 성과 리포트</div>
+          <div class="action-item">교체 보장으로 불안 해소</div>
+        </div>
+      </td>
+      <td style="color:#e0a020;font-size:11px">3개월 내 성과 미흡<br>→ KPI 초반 설정 중요</td>
+      <td style="font-weight:700;font-size:12px">"성과 없으면<br>팀을 바꿉니다"</td>
+    </tr>
+    <tr>
+      <td><span class="stage-badge" style="background:var(--s6);display:inline-block"></span><strong>갱신/교체</strong><br><span style="color:var(--muted);font-size:10px">Renew / Swap</span></td>
+      <td>
+        <span class="emotion-chip">🔄 재평가 중</span><br>
+        "계속 쓸까? 팀이 맞나?<br>다른 옵션은 없나?"
+      </td>
+      <td>
+        <div class="action-list">
+          <div class="action-item">갱신 전 성과 리뷰 미팅</div>
+          <div class="action-item">불만족 시 즉각 교체 프로세스</div>
+          <div class="action-item">업셀 or 다운셀 플랜 리디자인</div>
+        </div>
+      </td>
+      <td style="color:#2d9e6b;font-size:11px; font-weight:600">✓ 교체 보장이 해지 방어<br>→ 이탈보다 교체 선택</td>
+      <td style="font-weight:700;font-size:12px">"주도권은<br>항상 고객에게"</td>
+    </tr>
+  </tbody>
+</table>
+
+</body>
+</html>
